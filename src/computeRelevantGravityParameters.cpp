@@ -1,6 +1,6 @@
 /// @Author       : linfd 3039562364@qq.com
 /// @Date         : 2024-10-21 08:01:58
-/// @LastEditTime : 2024-10-22 15:55:00
+/// @LastEditTime : 2024-10-23 00:01:43
 /// @FilePath     : \computeRelevantGravityParameters\src\computeRelevantGravityParameters.cpp
 /// @Description  : 计算重力场模型的相关参数
 
@@ -28,8 +28,8 @@ int main()
                 double phi = 0.5 * PI - theta;
                 auto [T, delta_g, Delta_g, N] = WGS84.computeGeodeticGravity(theta, lambda, r, Pnm_);
                 ofsT << format("{:15.8f} {:15.8f} {:20.8E}\n", B, L, T);
-                ofsDeltaG << format("{:15.8f} {:15.8f} {:20.8E}\n", B, L, Delta_g);
-                ofsdeltaG << format("{:15.8f} {:15.8f} {:20.8E}\n", B, L, delta_g);
+                ofsDeltaG << format("{:15.8f} {:15.8f} {:20.8E}\n", B, L, Delta_g * 1000);
+                ofsdeltaG << format("{:15.8f} {:15.8f} {:20.8E}\n", B, L, delta_g * 1000);
                 ofsN << format("{:15.8f} {:15.8f} {:20.8E}\n", B, L, N);
             }
         }
@@ -39,6 +39,18 @@ int main()
         ofsdeltaG.close();
         ofsN.close();
     }
+
+    _putenv("PYTHONHOME=");
+    Py_Initialize();
+    PyObject *pName = PyUnicode_DecodeFSDefault(/* pythonFileName */ "draw");
+    PyObject *pModule = PyImport_Import(pName);
+    PyObject *pFunc = PyObject_GetAttrString(pModule, /* funcName */ "drawInCpp");
+    PyObject_CallObject(pFunc, NULL);
+    Py_DECREF(pName);
+    Py_DECREF(pModule);
+    Py_DECREF(pFunc);
+    Py_Finalize();
+
     return 0;
 }
 

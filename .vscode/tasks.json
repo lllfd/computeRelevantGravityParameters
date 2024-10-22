@@ -11,12 +11,12 @@
                 "-std=c++20",
                 "-o",
                 "${fileDirname}\\..\\bin\\${fileBasenameNoExtension}.exe",
+                "-I",
+                "${workspaceFolder}/include",
                 "-L",
-                "D\\python\\python312\\libs\\*",
+                "D:\\python\\python312\\libs\\*",
                 "-I",
                 "D:\\python\\python312\\include",
-                "-I",
-                "${workspaceFolder}/include"
             ],
             "options": {
                 "cwd": "${fileDirname}"
