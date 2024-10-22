@@ -1,8 +1,8 @@
 /// @Author       : linfd 3039562364@qq.com
 /// @Date         : 2024-10-21 08:02:37
-/// @LastEditTime : 2024-10-22 11:19:18
+/// @LastEditTime : 2024-10-22 17:22:18
 /// @FilePath     : \computeRelevantGravityParameters\include\computeRelevantGravityParameters.h
-/// @Description  :
+/// @Description  : 计算重力场模型的相关参数
 
 #pragma once
 #include <iostream>
@@ -19,7 +19,8 @@ const double PI = 3.14159265358979;
 #define DEG2RAD(x) ((x) * (PI) / 180.0)
 
 tuple<double, double, double> BLH2XYZ(double B, double L, double H, double a, double f);
-tuple<double, double, double> XYZ2R_THETA_LAMBDA(double X, double Y, double Z);
+tuple<double, double, double> XYZ2RThetaLambda(double X, double Y, double Z);
+tuple<double, double> BH2RTheta(double B, double H, double a, double f);
 
 class ReferenceEllipsoid
 {
