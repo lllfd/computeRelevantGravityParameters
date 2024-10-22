@@ -1,6 +1,6 @@
 /// @Author       : linfd 3039562364@qq.com
 /// @Date         : 2024-10-21 08:01:58
-/// @LastEditTime : 2024-10-23 00:01:43
+/// @LastEditTime : 2024-10-23 00:41:35
 /// @FilePath     : \computeRelevantGravityParameters\src\computeRelevantGravityParameters.cpp
 /// @Description  : 计算重力场模型的相关参数
 
@@ -8,10 +8,12 @@
 
 int main()
 {
+    clog << "\nProgram started..." << endl;
     ReferenceEllipsoid WGS84("WGS84", 6378137.0, 1.0 / 298.257223563, 3.986004418e14, 7.29211500000E-5);
     WGS84.outputReferenceEllipsoidParameters();
     if (WGS84.readCmn_AndSmn_("../data/EGM96.cyh"))
     {
+        clog << "\nComputing relevant gravity parameters..." << endl;
         ofstream ofsN("../out/N.txt");
         ofstream ofsT("../out/T.txt");
         ofstream ofsDeltaG("../out/DDeltaG.txt");
@@ -33,23 +35,41 @@ int main()
                 ofsN << format("{:15.8f} {:15.8f} {:20.8E}\n", B, L, N);
             }
         }
-        clog << "Compute relevant gravity parameters successfully!" << endl;
+        clog << "\nCompute relevant gravity parameters successfully!" << endl;
         ofsT.close();
         ofsDeltaG.close();
         ofsdeltaG.close();
         ofsN.close();
     }
 
+    clog << "\nData visualizing..." << endl;
     _putenv("PYTHONHOME=");
     Py_Initialize();
     PyObject *pName = PyUnicode_DecodeFSDefault(/* pythonFileName */ "draw");
+    if (!pName)
+    {
+        cerr << "\nDecode python file name failed!" << endl;
+        return -1;
+    }
     PyObject *pModule = PyImport_Import(pName);
+    if (!pModule)
+    {
+        cerr << "\nImport python file failed!" << endl;
+        return -1;
+    }
     PyObject *pFunc = PyObject_GetAttrString(pModule, /* funcName */ "drawInCpp");
+    if (!pFunc || !PyCallable_Check(pFunc))
+    {
+        cerr << "\nGet python function failed!" << endl;
+        return -1;
+    }
     PyObject_CallObject(pFunc, NULL);
     Py_DECREF(pName);
     Py_DECREF(pModule);
     Py_DECREF(pFunc);
     Py_Finalize();
+    clog << "\nData visualize successfully!" << endl;
+    clog << "\nProgram finished!" << endl;
 
     return 0;
 }
@@ -140,7 +160,7 @@ bool ReferenceEllipsoid::readCmn_AndSmn_(const string &fileName)
     FILE *fp = fopen(fileName.c_str(), "r");
     if (fp == NULL)
     {
-        cerr << "Open file " << fileName << " failed!" << endl;
+        cerr << "\nOpen file " << fileName << " failed!" << endl;
         return false;
     }
     while (!feof(fp))
@@ -156,12 +176,12 @@ bool ReferenceEllipsoid::readCmn_AndSmn_(const string &fileName)
                 m_Cnm_[m][n] = c;
                 m_Snm_[m][n] = s;
             }
-            clog << "Read normal gravity parameters successfully!" << endl;
+            clog << "\nRead normal gravity parameters successfully!" << endl;
             fclose(fp);
             return true;
         }
     }
-    cerr << "Not Find END_OF_HEAD" << endl;
+    cerr << "\nNot Find END_OF_HEAD" << endl;
     return false;
 }
 

@@ -1,8 +1,8 @@
 '''
 Author       : linfd 3039562364@qq.com
 Date         : 2024-10-21 23:19:39
-LastEditTime : 2024-10-22 23:55:36
-FilePath     : \computeRelevantGravityParameters\bin\draw.py
+LastEditTime : 2024-10-23 00:59:43
+FilePath     : /computeRelevantGravityParameters/bin/draw.py
 Description  : 数据可视化
 '''
 
@@ -22,7 +22,7 @@ import cartopy.feature as cfeature
 from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 import matplotlib.colors as mcolors
 
-def draw(file_path, title, colorbar_label):
+def draw(file_path, out_dir,title, colorbar_label):
     data = np.loadtxt(file_path)
     longitudes = data[:, 1]
     latitudes = data[:, 0]
@@ -60,19 +60,20 @@ def draw(file_path, title, colorbar_label):
     gl.top_labels = False
     gl.right_labels = False
 
-    plt.savefig(f'out/{title.replace(" ", "_")}.png', dpi=300, bbox_inches='tight')
+    outpath = f'{out_dir}/{title.replace(" ", "_")}.png'
+    plt.savefig(outpath, dpi=300, bbox_inches='tight')
     plt.show(block=False)
 
 def drawInCpp():
-    draw('../out/T.txt', 'Disturbance Potential T Distribution', 'Disturbance Potential T (mGal)')
-    draw('../out/N.txt', 'Height Anomaly N Distribution', 'Height Anomaly N (m)')
-    draw('../out/DdeltaG.txt', 'Gravity Anomaly Δg Distribution', 'Gravity Anomaly Δg (mGal)')
-    draw('../out/DeltaG.txt', 'Gravity Disturbance δg Distribution', 'Gravity Disturbance δg (mGal)')
+    draw('../out/T.txt', '../out','Disturbance Potential T Distribution', 'Disturbance Potential T (mGal)')
+    draw('../out/N.txt', '../out','Height Anomaly N Distribution', 'Height Anomaly N (m)')
+    draw('../out/DdeltaG.txt','../out', 'Gravity Anomaly Δg Distribution', 'Gravity Anomaly Δg (mGal)')
+    draw('../out/DeltaG.txt', '../out','Gravity Disturbance δg Distribution', 'Gravity Disturbance δg (mGal)')
     plt.show(block=True)
 
 if __name__ == '__main__':
-    draw('out/T.txt', 'Disturbance Potential T Distribution', 'Disturbance Potential T (mGal)')
-    draw('out/N.txt', 'Height Anomaly N Distribution', 'Height Anomaly N (m)')
-    draw('out/DdeltaG.txt', 'Gravity Anomaly Δg Distribution', 'Gravity Anomaly Δg (mGal)')
-    draw('out/DeltaG.txt', 'Gravity Disturbance δg Distribution', 'Gravity Disturbance δg (mGal)')
+    draw('out/T.txt','out', 'Disturbance Potential T Distribution', 'Disturbance Potential T (mGal)')
+    draw('out/N.txt', 'out','Height Anomaly N Distribution', 'Height Anomaly N (m)')
+    draw('out/DdeltaG.txt','out', 'Gravity Anomaly Δg Distribution', 'Gravity Anomaly Δg (mGal)')
+    draw('out/DeltaG.txt', 'out','Gravity Disturbance δg Distribution', 'Gravity Disturbance δg (mGal)')
     plt.show(block=True) 
