@@ -1,7 +1,7 @@
 /// @Author       : linfd 3039562364@qq.com
 /// @Date         : 2024-10-21 08:01:58
-/// @LastEditTime : 2024-10-23 00:41:35
-/// @FilePath     : \computeRelevantGravityParameters\src\computeRelevantGravityParameters.cpp
+/// @LastEditTime : 2024-10-23 09:17:29
+/// @FilePath     : /computeRelevantGravityParameters/src/computeRelevantGravityParameters.cpp
 /// @Description  : 计算重力场模型的相关参数
 
 #include "computeRelevantGravityParameters.h"
@@ -11,58 +11,43 @@ int main()
     clog << "\nProgram started..." << endl;
     ReferenceEllipsoid WGS84("WGS84", 6378137.0, 1.0 / 298.257223563, 3.986004418e14, 7.29211500000E-5);
     WGS84.outputReferenceEllipsoidParameters();
-    if (WGS84.readCmn_AndSmn_("../data/EGM96.cyh"))
-    {
-        clog << "\nComputing relevant gravity parameters..." << endl;
-        ofstream ofsN("../out/N.txt");
-        ofstream ofsT("../out/T.txt");
-        ofstream ofsDeltaG("../out/DDeltaG.txt");
-        ofstream ofsdeltaG("../out/deltaG.txt");
+    if (!WGS84.readCmn_AndSmn_("../data/EGM96.cyh"))
+        return -1;
 
-        for (double B = 21; B <= 26; B += 5 / 60.0)
+    clog << "\nComputing relevant gravity parameters..." << endl;
+    ofstream ofsN("../out/N.txt");
+    ofstream ofsT("../out/T.txt");
+    ofstream ofsDeltaG("../out/DDeltaG.txt");
+    ofstream ofsdeltaG("../out/deltaG.txt");
+
+    for (double B = 21; B <= 26; B += 5 / 60.0)
+    {
+        auto [r, theta] = BH2RTheta(DEG2RAD(B), 0, WGS84.getA(), WGS84.getF());
+        vector<vector<double>> Pnm_;
+        WGS84.computePmn_(theta, Pnm_);
+        for (double L = 119; L <= 124; L += 5 / 60.0)
         {
-            auto [r, theta] = BH2RTheta(DEG2RAD(B), 0, WGS84.getA(), WGS84.getF());
-            vector<vector<double>> Pnm_;
-            WGS84.computePmn_(theta, Pnm_);
-            for (double L = 119; L <= 124; L += 5 / 60.0)
-            {
-                double lambda = DEG2RAD(L);
-                double phi = 0.5 * PI - theta;
-                auto [T, delta_g, Delta_g, N] = WGS84.computeGeodeticGravity(theta, lambda, r, Pnm_);
-                ofsT << format("{:15.8f} {:15.8f} {:20.8E}\n", B, L, T);
-                ofsDeltaG << format("{:15.8f} {:15.8f} {:20.8E}\n", B, L, Delta_g * 1000);
-                ofsdeltaG << format("{:15.8f} {:15.8f} {:20.8E}\n", B, L, delta_g * 1000);
-                ofsN << format("{:15.8f} {:15.8f} {:20.8E}\n", B, L, N);
-            }
+            double lambda = DEG2RAD(L);
+            double phi = 0.5 * PI - theta;
+            auto [T, delta_g, Delta_g, N] = WGS84.computeGeodeticGravity(theta, lambda, r, Pnm_);
+            ofsT << format("{:15.8f} {:15.8f} {:20.8E}\n", B, L, T);
+            ofsDeltaG << format("{:15.8f} {:15.8f} {:20.8E}\n", B, L, Delta_g * 1000);
+            ofsdeltaG << format("{:15.8f} {:15.8f} {:20.8E}\n", B, L, delta_g * 1000);
+            ofsN << format("{:15.8f} {:15.8f} {:20.8E}\n", B, L, N);
         }
-        clog << "\nCompute relevant gravity parameters successfully!" << endl;
-        ofsT.close();
-        ofsDeltaG.close();
-        ofsdeltaG.close();
-        ofsN.close();
     }
+    clog << "\nCompute relevant gravity parameters successfully!" << endl;
+    ofsT.close();
+    ofsDeltaG.close();
+    ofsdeltaG.close();
+    ofsN.close();
 
     clog << "\nData visualizing..." << endl;
     _putenv("PYTHONHOME=");
     Py_Initialize();
     PyObject *pName = PyUnicode_DecodeFSDefault(/* pythonFileName */ "draw");
-    if (!pName)
-    {
-        cerr << "\nDecode python file name failed!" << endl;
-        return -1;
-    }
     PyObject *pModule = PyImport_Import(pName);
-    if (!pModule)
-    {
-        cerr << "\nImport python file failed!" << endl;
-        return -1;
-    }
     PyObject *pFunc = PyObject_GetAttrString(pModule, /* funcName */ "drawInCpp");
-    if (!pFunc || !PyCallable_Check(pFunc))
-    {
-        cerr << "\nGet python function failed!" << endl;
-        return -1;
-    }
     PyObject_CallObject(pFunc, NULL);
     Py_DECREF(pName);
     Py_DECREF(pModule);

@@ -14,14 +14,6 @@ import cartopy.feature as cfeature
 from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 import matplotlib.colors as mcolors
 
-import numpy as np
-import matplotlib.pyplot as plt
-from scipy.interpolate import griddata
-import cartopy.crs as ccrs
-import cartopy.feature as cfeature
-from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
-import matplotlib.colors as mcolors
-
 def draw(file_path, out_dir,title, colorbar_label):
     data = np.loadtxt(file_path)
     longitudes = data[:, 1]
