@@ -1,7 +1,7 @@
 '''
 Author       : linfd 3039562364@qq.com
 Date         : 2024-10-21 23:19:39
-LastEditTime : 2024-10-23 00:59:43
+LastEditTime : 2024-10-23 17:27:19
 FilePath     : /computeRelevantGravityParameters/bin/draw.py
 Description  : 数据可视化
 '''
@@ -25,7 +25,7 @@ def draw(file_path, out_dir,title, colorbar_label):
     
     fig = plt.figure(figsize=(10, 8))
     ax = fig.add_subplot(1, 1, 1, projection=ccrs.NearsidePerspective(central_longitude, central_latitude))
-    ax.add_feature(cfeature.COASTLINE, linewidth=0.5)
+    ax.add_feature(cfeature.COASTLINE, linewidth=0.15)
     ax.add_feature(cfeature.BORDERS, linestyle=':') 
 
     ax.set_extent([longitudes.min()+0.2, longitudes.max()-0.2, latitudes.min()+0.2, latitudes.max()-0.2], crs=ccrs.PlateCarree())
@@ -45,7 +45,6 @@ def draw(file_path, out_dir,title, colorbar_label):
     
     plt.title(title, fontsize=16)
 
-    # 显示网格线
     gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True, linewidth=1, linestyle='--', color='gray', alpha=0.5)
     gl.xformatter = LongitudeFormatter(zero_direction_label=True)
     gl.yformatter = LatitudeFormatter()

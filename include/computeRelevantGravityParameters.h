@@ -1,7 +1,7 @@
 /// @Author       : linfd 3039562364@qq.com
 /// @Date         : 2024-10-21 08:02:37
-/// @LastEditTime : 2024-10-22 17:22:18
-/// @FilePath     : \computeRelevantGravityParameters\include\computeRelevantGravityParameters.h
+/// @LastEditTime : 2024-10-23 12:07:01
+/// @FilePath     : /computeRelevantGravityParameters/include/computeRelevantGravityParameters.h
 /// @Description  : 计算重力场模型的相关参数
 
 #pragma once
@@ -31,6 +31,7 @@ public:
     void outputReferenceEllipsoidParameters();
     bool readCmn_AndSmn_(const string &fileName);
     bool computePmn_(double theta, vector<vector<double>> &Pnm_);
+    bool computeJ2_();
     double computeNormalGravityOnEllipsoidalSurface(double phi);
     double computeNormalGravityUpEllipsoidalSurface(double phi, double h);
     double computeGravityDisturbance(double theta, double lambda, double r, vector<vector<double>> Pnm_);
@@ -56,6 +57,7 @@ private:
     double m_garmaA;
     double m_garmaB;
     int m_order = 360;
+    vector<double> m_J_;
     vector<vector<double>> m_Cnm_;
     vector<vector<double>> m_Snm_;
 };

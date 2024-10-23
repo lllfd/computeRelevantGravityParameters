@@ -1,6 +1,6 @@
 /// @Author       : linfd 3039562364@qq.com
 /// @Date         : 2024-10-21 08:01:58
-/// @LastEditTime : 2024-10-23 09:17:29
+/// @LastEditTime : 2024-10-23 17:03:57
 /// @FilePath     : /computeRelevantGravityParameters/src/computeRelevantGravityParameters.cpp
 /// @Description  : 计算重力场模型的相关参数
 
@@ -15,6 +15,7 @@ int main()
         return -1;
 
     clog << "\nComputing relevant gravity parameters..." << endl;
+    WGS84.computeJ2_();
     ofstream ofsN("../out/N.txt");
     ofstream ofsT("../out/T.txt");
     ofstream ofsDeltaG("../out/DDeltaG.txt");
@@ -31,8 +32,8 @@ int main()
             double phi = 0.5 * PI - theta;
             auto [T, delta_g, Delta_g, N] = WGS84.computeGeodeticGravity(theta, lambda, r, Pnm_);
             ofsT << format("{:15.8f} {:15.8f} {:20.8E}\n", B, L, T);
-            ofsDeltaG << format("{:15.8f} {:15.8f} {:20.8E}\n", B, L, Delta_g * 1000);
-            ofsdeltaG << format("{:15.8f} {:15.8f} {:20.8E}\n", B, L, delta_g * 1000);
+            ofsDeltaG << format("{:15.8f} {:15.8f} {:20.8E}\n", B, L, Delta_g * 100000);
+            ofsdeltaG << format("{:15.8f} {:15.8f} {:20.8E}\n", B, L, delta_g * 100000);
             ofsN << format("{:15.8f} {:15.8f} {:20.8E}\n", B, L, N);
         }
     }
@@ -61,12 +62,12 @@ int main()
 
 tuple<double, double, double> BLH2XYZ(double B, double L, double H, double a, double f)
 {
-    double ee = 2.0 * f - f * f;
-    double W = sqrt(1.0 - ee * sin(B) * sin(B));
+    double e2 = 2.0 * f - f * f;
+    double W = sqrt(1.0 - e2 * sin(B) * sin(B));
     double N = a / W;
     double X = (N + H) * cos(B) * cos(L);
     double Y = (N + H) * cos(B) * sin(L);
-    double Z = (N * (1.0 - ee) + H) * sin(B);
+    double Z = (N * (1.0 - e2) + H) * sin(B);
     return make_tuple(X, Y, Z);
 }
 
@@ -80,11 +81,11 @@ tuple<double, double, double> XYZ2RThetaLambda(double X, double Y, double Z)
 
 tuple<double, double> BH2RTheta(double B, double H, double a, double f)
 {
-    double ee = 2.0 * f - f * f;
-    double W = sqrt(1.0 - ee * sin(B) * sin(B));
+    double e2 = 2.0 * f - f * f;
+    double W = sqrt(1.0 - e2 * sin(B) * sin(B));
     double N = a / W;
     double sum_xx_yy = (pow((N + H) * cos(B), 2));
-    double Z = (N * (1.0 - ee) + H) * sin(B);
+    double Z = (N * (1.0 - e2) + H) * sin(B);
     double r = sqrt(sum_xx_yy + Z * Z);
     double theta = atan2(sqrt(sum_xx_yy), Z);
     return make_tuple(r, theta);
@@ -189,12 +190,24 @@ bool ReferenceEllipsoid::computePmn_(double theta, vector<vector<double>> &Pnm_)
     return true;
 }
 
+bool ReferenceEllipsoid::computeJ2_()
+{
+    double J2 = m_J2_ * sqrt(5);
+    double CA_ME2 = J2 / m_e2;
+    m_J_.resize(20 + 1, 0);
+    m_J_[2] = m_J2_;
+    for (int n = 2; (n * 2) < m_J_.size(); n++)
+        m_J_[n * 2] = (pow(-1, n + 1) * 3 * pow(m_e2, n) / (2 * n + 1) / (2 * n + 3) * (1 - n + 5 * n * CA_ME2)) / sqrt(2 * n + 3);
+    return true;
+}
+
 double ReferenceEllipsoid::computeGravityDisturbance(double theta, double lambda, double r, vector<vector<double>> Pnm_)
 {
     vector<vector<double>> Cnm_T = m_Cnm_;
     vector<vector<double>> Snm_T = m_Snm_;
-    for (int n = 0; n <= Cnm_T.size(); n += 2)
-        Cnm_T[n][0] = 0;
+    Cnm_T[0][0] = 0;
+    for (int n = 2; n < m_J_.size(); n += 2)
+        Cnm_T[n][0] += m_J_[n];
     double delta_g = 0;
     double sum2 = 0;
     for (int n = 0; n <= m_order; n++)
@@ -212,8 +225,9 @@ double ReferenceEllipsoid::computeGravityAnomaly(double theta, double lambda, do
 {
     vector<vector<double>> Cnm_T = m_Cnm_;
     vector<vector<double>> Snm_T = m_Snm_;
-    for (int n = 0; n <= Cnm_T.size(); n += 2)
-        Cnm_T[n][0] = 0;
+    Cnm_T[0][0] = 0;
+    for (int n = 2; n < m_J_.size(); n += 2)
+        Cnm_T[n][0] += m_J_[n];
     double Delta_g = 0;
     double sum2 = 0;
     for (int n = 0; n <= m_order; n++)
@@ -231,8 +245,9 @@ double ReferenceEllipsoid::computePerturbationPosition(double theta, double lamb
 {
     vector<vector<double>> Cnm_T = m_Cnm_;
     vector<vector<double>> Snm_T = m_Snm_;
-    for (int n = 0; n <= Cnm_T.size(); n += 2)
-        Cnm_T[n][0] = 0;
+    Cnm_T[0][0] = 0;
+    for (int n = 2; n < m_J_.size(); n += 2)
+        Cnm_T[n][0] += m_J_[n];
     double T = 0;
     double sum2 = 0;
     for (int n = 0; n <= m_order; n++)
@@ -250,8 +265,9 @@ double ReferenceEllipsoid::computeGeoidDifference(double theta, double lambda, d
 {
     vector<vector<double>> Cnm_T = m_Cnm_;
     vector<vector<double>> Snm_T = m_Snm_;
-    for (int n = 0; n <= Cnm_T.size(); n += 2)
-        Cnm_T[n][0] = 0;
+    Cnm_T[0][0] = 0;
+    for (int n = 2; n < m_J_.size(); n += 2)
+        Cnm_T[n][0] += m_J_[n];
     double N = 0;
     double garma = computeNormalGravityOnEllipsoidalSurface(0.5 / PI - theta);
     double sum2 = 0;
@@ -270,8 +286,9 @@ tuple<double, double, double, double> ReferenceEllipsoid::computeGeodeticGravity
 {
     vector<vector<double>> Cnm_T = m_Cnm_;
     vector<vector<double>> Snm_T = m_Snm_;
-    for (int n = 0; n <= Cnm_T.size(); n += 2)
-        Cnm_T[n][0] = 0;
+    Cnm_T[0][0] = 0;
+    for (int n = 2; n < m_J_.size(); n += 2)
+        Cnm_T[n][0] += m_J_[n];
     double garma = computeNormalGravityOnEllipsoidalSurface(0.5 * PI - theta);
     double T = 0, delta_g = 0, Delta_g = 0, N = 0;
     double sum2 = 0, sum3 = 0, sum4 = 0;
